@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Access Review Dashboard — IAM Certification Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #08090e;
+  --surface: #0f111a;
+  --surface2: #151822;
+  --surface3: #1c1f2e;
+  --border: #1e2235;
+  --accent: #4f8ef7;
+  --green: #22c55e;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+  --purple: #a855f7;
+  --text: #e2e8f0;
+  --muted: #64748b;
+  --muted2: #94a3b8;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  display: flex;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 50;
+}
+
+.sidebar-logo {
+  padding: 1.5rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.logo-tag {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--accent);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 0.3rem;
+}
+.logo-name {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.sidebar-nav {
+  padding: 1rem 0;
+  flex: 1;
+}
+
+.nav-section {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.58rem;
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.75rem 1.25rem 0.4rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--muted2);
+  cursor: pointer;
+  transition: all 0.2s;
+  border-left: 2px solid transparent;
+}
+.nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(79,142,247,0.06); }
+.nav-icon { font-size: 1rem; width: 18px; text-align: center; }
+
+.sidebar-footer {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border);
+}
+.user-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.user-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.user-info { min-width: 0; }
+.user-name { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-role { font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* Main */
+.main {
+  margin-left: 220px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Topbar */
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+.topbar-title h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; }
+.topbar-title p { font-size: 0.8rem; color: var(--muted2); margin-top: 0.1rem; }
+.topbar-actions { display: flex; gap: 0.75rem; align-items: center; }
+
+.badge-status {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.62rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 100px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.badge-active { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+
+.btn {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.55rem 1.1rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #6b9ef8; }
+.btn-ghost { background: transparent; color: var(--muted2); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn-danger { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+.btn-danger:hover { background: rgba(239,68,68,0.2); }
+.btn-success { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+.btn-success:hover { background: rgba(34,197,94,0.2); }
+
+/* Content */
+.content { padding: 2rem; flex: 1; }
+
+/* Stats row */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.stat-card:hover { border-color: rgba(79,142,247,0.3); }
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.stat-card:nth-child(1)::before { background: var(--accent); }
+.stat-card:nth-child(2)::before { background: var(--yellow); }
+.stat-card:nth-child(3)::before { background: var(--green); }
+.stat-card:nth-child(4)::before { background: var(--red); }
+
+.stat-label { font-size: 0.78rem; color: var(--muted2); margin-bottom: 0.5rem; }
+.stat-value { font-size: 2rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+.stat-sub { font-family: 'Space Mono', monospace; font-size: 0.62rem; color: var(--muted); margin-top: 0.4rem; letter-spacing: 0.04em; }
+
+/* Grid layout */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.75rem; }
+
+/* Chart card */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.card-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-title { font-size: 0.9rem; font-weight: 600; }
+.card-sub { font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 0.15rem; }
+.card-body { padding: 1.5rem; }
+
+/* Donut chart */
+.chart-wrap { display: flex; align-items: center; gap: 2rem; }
+svg.donut { overflow: visible; }
+.donut-legend { display: flex; flex-direction: column; gap: 0.75rem; }
+.legend-item { display: flex; align-items: center; gap: 0.6rem; font-size: 0.82rem; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.legend-val { font-weight: 700; margin-left: auto; padding-left: 1rem; font-family: 'Space Mono', monospace; font-size: 0.78rem; }
+
+/* Bar chart */
+.bar-chart { display: flex; flex-direction: column; gap: 0.75rem; }
+.bar-row { display: flex; align-items: center; gap: 0.75rem; }
+.bar-label { font-size: 0.78rem; color: var(--muted2); width: 90px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { flex: 1; height: 8px; background: var(--surface3); border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; transition: width 1s cubic-bezier(0.4,0,0.2,1); }
+.bar-count { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--muted2); width: 28px; text-align: right; flex-shrink: 0; }
+
+/* Filters */
+.filters {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0.5rem 0.9rem;
+  flex: 1;
+  max-width: 280px;
+  transition: border-color 0.2s;
+}
+.search-box:focus-within { border-color: var(--accent); }
+.search-box input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  width: 100%;
+}
+.search-box input::placeholder { color: var(--muted); }
+
+select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0.5rem 0.9rem;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+select:focus { border-color: var(--accent); }
+
+.filter-count {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  margin-left: auto;
+}
+
+/* Table */
+.table-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1.75rem;
+}
+.table-wrap { overflow-x: auto; }
+
+table { width: 100%; border-collapse: collapse; }
+thead tr { background: var(--surface2); }
+th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 400;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+th:first-child { padding-left: 1.5rem; }
+th:last-child { padding-right: 1.5rem; }
+
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: rgba(255,255,255,0.02); }
+tbody tr.reviewed { opacity: 0.55; }
+
+td {
+  padding: 0.85rem 1rem;
+  font-size: 0.85rem;
+  vertical-align: middle;
+}
+td:first-child { padding-left: 1.5rem; }
+td:last-child { padding-right: 1.5rem; }
+
+.user-cell { display: flex; align-items: center; gap: 0.75rem; }
+.avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+  font-family: 'Space Mono', monospace;
+}
+.user-cell-info .name { font-weight: 600; font-size: 0.85rem; }
+.user-cell-info .email { font-size: 0.72rem; color: var(--muted2); margin-top: 0.05rem; }
+
+.risk-badge {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 3px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.risk-high { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+.risk-medium { background: rgba(245,158,11,0.12); color: var(--yellow); border: 1px solid rgba(245,158,11,0.2); }
+.risk-low { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+
+.status-badge {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 3px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.status-pending { background: rgba(245,158,11,0.1); color: var(--yellow); border: 1px solid rgba(245,158,11,0.2); }
+.status-approved { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+.status-revoked { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+
+.action-btns { display: flex; gap: 0.4rem; }
+.action-btn {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: 3px;
+  border: 1px solid;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.action-approve { background: rgba(34,197,94,0.08); color: var(--green); border-color: rgba(34,197,94,0.2); }
+.action-approve:hover { background: rgba(34,197,94,0.2); }
+.action-revoke { background: rgba(239,68,68,0.08); color: var(--red); border-color: rgba(239,68,68,0.2); }
+.action-revoke:hover { background: rgba(239,68,68,0.2); }
+.action-done { color: var(--muted); border-color: var(--border); background: transparent; cursor: default; }
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.page-info { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--muted); letter-spacing: 0.06em; }
+.page-btns { display: flex; gap: 0.35rem; }
+.page-btn {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--muted2);
+  background: transparent;
+  transition: all 0.2s;
+}
+.page-btn:hover { border-color: var(--accent); color: var(--accent); }
+.page-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* Toast */
+.toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 1000; display: flex; flex-direction: column; gap: 0.5rem; }
+.toast {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  animation: slideIn 0.3s ease;
+  min-width: 260px;
+}
+.toast.success { border-left: 3px solid var(--green); }
+.toast.danger { border-left: 3px solid var(--red); }
+.toast.info { border-left: 3px solid var(--accent); }
+@keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+/* Audit log */
+.audit-list { display: flex; flex-direction: column; gap: 0; }
+.audit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.82rem;
+}
+.audit-item:last-child { border-bottom: none; }
+.audit-icon { font-size: 0.85rem; flex-shrink: 0; margin-top: 0.05rem; }
+.audit-text { color: var(--muted2); line-height: 1.5; }
+.audit-text strong { color: var(--text); }
+.audit-time { font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--muted); margin-left: auto; flex-shrink: 0; letter-spacing: 0.04em; white-space: nowrap; }
+
+/* Progress ring */
+.progress-ring-wrap { display: flex; align-items: center; justify-content: center; padding: 1rem 0; }
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .grid-2 { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .content { padding: 1rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-tag">IAM Portal</div>
+    <div class="logo-name">AccessReview</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Main</div>
+    <div class="nav-item active"><span class="nav-icon">📊</span> Dashboard</div>
+    <div class="nav-item"><span class="nav-icon">👥</span> Users</div>
+    <div class="nav-item"><span class="nav-icon">🔑</span> Entitlements</div>
+    <div class="nav-item"><span class="nav-icon">📋</span> Campaigns</div>
+    <div class="nav-section">Reports</div>
+    <div class="nav-item"><span class="nav-icon">📈</span> Analytics</div>
+    <div class="nav-item"><span class="nav-icon">🗂️</span> Audit Log</div>
+    <div class="nav-section">Settings</div>
+    <div class="nav-item"><span class="nav-icon">⚙️</span> Policies</div>
+    <div class="nav-item"><span class="nav-icon">🔔</span> Alerts</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="user-avatar">MR</div>
+      <div class="user-info">
+        <div class="user-name">Mihir Rathore</div>
+        <div class="user-role">IAM Analyst</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">
+      <h1>Access Review Dashboard</h1>
+      <p>Q1 2025 Certification Campaign · Due: Mar 31, 2025</p>
+    </div>
+    <div class="topbar-actions">
+      <span class="badge-status badge-active">● Campaign Active</span>
+      <button class="btn btn-ghost" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="btn btn-primary" onclick="showToast('Report submitted to compliance team.','info')">Submit Report</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Stats -->
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Total Access Rights</div>
+        <div class="stat-value" id="stat-total">48</div>
+        <div class="stat-sub">Across 6 departments</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pending Review</div>
+        <div class="stat-value" style="color:var(--yellow)" id="stat-pending">—</div>
+        <div class="stat-sub">Require decision</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Approved</div>
+        <div class="stat-value" style="color:var(--green)" id="stat-approved">—</div>
+        <div class="stat-sub">Access confirmed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Revoked</div>
+        <div class="stat-value" style="color:var(--red)" id="stat-revoked">—</div>
+        <div class="stat-sub">Access removed</div>
+      </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="grid-2">
+      <!-- Donut -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Review Progress</div>
+            <div class="card-sub">Campaign completion status</div>
+          </div>
+          <div id="completion-pct" style="font-family:'Space Mono',monospace;font-size:1.1rem;font-weight:700;color:var(--accent)">0%</div>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap">
+            <svg class="donut" width="130" height="130" viewBox="0 0 130 130">
+              <circle cx="65" cy="65" r="50" fill="none" stroke="var(--surface3)" stroke-width="14"/>
+              <circle id="donut-pending" cx="65" cy="65" r="50" fill="none" stroke="var(--yellow)" stroke-width="14"
+                stroke-dasharray="314" stroke-dashoffset="0" stroke-linecap="round"
+                transform="rotate(-90 65 65)" style="transition:stroke-dashoffset 1s ease"/>
+              <circle id="donut-approved" cx="65" cy="65" r="50" fill="none" stroke="var(--green)" stroke-width="14"
+                stroke-dasharray="314" stroke-dashoffset="314" stroke-linecap="round"
+                transform="rotate(-90 65 65)" style="transition:stroke-dashoffset 1s ease"/>
+              <circle id="donut-revoked" cx="65" cy="65" r="50" fill="none" stroke="var(--red)" stroke-width="14"
+                stroke-dasharray="314" stroke-dashoffset="314" stroke-linecap="round"
+                transform="rotate(-90 65 65)" style="transition:stroke-dashoffset 1s ease"/>
+              <text x="65" y="60" text-anchor="middle" fill="var(--text)" font-size="18" font-weight="700" font-family="DM Sans">
+                <tspan id="donut-center-num">48</tspan>
+              </text>
+              <text x="65" y="76" text-anchor="middle" fill="var(--muted)" font-size="9" font-family="Space Mono">TOTAL</text>
+            </svg>
+            <div class="donut-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>Pending<span class="legend-val" id="leg-pending">—</span></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Approved<span class="legend-val" id="leg-approved">—</span></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Revoked<span class="legend-val" id="leg-revoked">—</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bar chart by department -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Pending by Department</div>
+            <div class="card-sub">Users awaiting review</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="bar-chart" id="dept-chart"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table + Audit -->
+    <div class="grid-2" style="margin-bottom:0">
+      <!-- Table -->
+      <div style="grid-column: 1 / -1;">
+        <div class="table-card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">User Access Entries</div>
+              <div class="card-sub">Review each user's entitlements</div>
+            </div>
+          </div>
+          <div class="card-body" style="padding-bottom:0.75rem">
+            <div class="filters">
+              <div class="search-box">
+                <span style="color:var(--muted)">🔍</span>
+                <input type="text" id="search-input" placeholder="Search user, role, department..." oninput="filterTable()" />
+              </div>
+              <select id="filter-status" onchange="filterTable()">
+                <option value="">All Status</option>
+                <option value="Pending">Pending</option>
+                <option value="Approved">Approved</option>
+                <option value="Revoked">Revoked</option>
+              </select>
+              <select id="filter-risk" onchange="filterTable()">
+                <option value="">All Risk</option>
+                <option value="High">High Risk</option>
+                <option value="Medium">Medium Risk</option>
+                <option value="Low">Low Risk</option>
+              </select>
+              <select id="filter-dept" onchange="filterTable()">
+                <option value="">All Departments</option>
+              </select>
+              <span class="filter-count" id="filter-count"></span>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Department</th>
+                  <th>Role / Entitlement</th>
+                  <th>Access Since</th>
+                  <th>Last Login</th>
+                  <th>Risk</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="table-body"></tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <div class="page-info" id="page-info"></div>
+            <div class="page-btns" id="page-btns"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Audit log -->
+    <div class="card" style="margin-top:1rem">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Audit Log</div>
+          <div class="card-sub">Recent review actions</div>
+        </div>
+        <button class="btn btn-ghost" onclick="clearAudit()">Clear</button>
+      </div>
+      <div class="card-body">
+        <div class="audit-list" id="audit-log">
+          <div class="audit-item">
+            <span class="audit-icon">🟡</span>
+            <span class="audit-text">Campaign <strong>Q1 2025 Access Review</strong> started. 48 entries loaded for review.</span>
+            <span class="audit-time">just now</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────────
+const USERS = [
+  {id:1,  name:"Alice Johnson",    email:"alice.j@acmecorp.com",    dept:"Finance",    role:"SAP Finance Admin",         since:"2022-03-15", lastLogin:"2025-01-28", risk:"High",   status:"Pending"},
+  {id:2,  name:"Bob Carter",       email:"bob.c@acmecorp.com",      dept:"IT",         role:"Domain Admin",              since:"2021-07-01", lastLogin:"2025-01-30", risk:"High",   status:"Pending"},
+  {id:3,  name:"Carol Smith",      email:"carol.s@acmecorp.com",    dept:"HR",         role:"HRIS Full Access",          since:"2023-01-10", lastLogin:"2024-12-05", risk:"High",   status:"Pending"},
+  {id:4,  name:"David Lee",        email:"david.l@acmecorp.com",    dept:"Engineering",role:"AWS Production Admin",      since:"2022-09-20", lastLogin:"2025-01-31", risk:"High",   status:"Pending"},
+  {id:5,  name:"Eva Martinez",     email:"eva.m@acmecorp.com",      dept:"Finance",    role:"AP/AR Read Write",          since:"2023-05-12", lastLogin:"2025-01-15", risk:"Medium", status:"Pending"},
+  {id:6,  name:"Frank Wilson",     email:"frank.w@acmecorp.com",    dept:"Sales",      role:"CRM Admin",                 since:"2021-11-30", lastLogin:"2024-11-20", risk:"Medium", status:"Pending"},
+  {id:7,  name:"Grace Kim",        email:"grace.k@acmecorp.com",    dept:"IT",         role:"Azure AD Global Reader",    since:"2023-08-01", lastLogin:"2025-01-29", risk:"Low",    status:"Pending"},
+  {id:8,  name:"Henry Brown",      email:"henry.b@acmecorp.com",    dept:"Legal",      role:"Contract Mgmt Full Access", since:"2022-04-18", lastLogin:"2025-01-10", risk:"Medium", status:"Pending"},
+  {id:9,  name:"Isla Thompson",    email:"isla.t@acmecorp.com",     dept:"Marketing",  role:"Analytics Read",            since:"2024-01-05", lastLogin:"2025-01-30", risk:"Low",    status:"Pending"},
+  {id:10, name:"Jack Davis",       email:"jack.d@acmecorp.com",     dept:"IT",         role:"Firewall Admin",            since:"2020-06-15", lastLogin:"2025-01-31", risk:"High",   status:"Pending"},
+  {id:11, name:"Karen White",      email:"karen.w@acmecorp.com",    dept:"Finance",    role:"GL View Only",              since:"2024-03-20", lastLogin:"2025-01-25", risk:"Low",    status:"Pending"},
+  {id:12, name:"Leo Harris",       email:"leo.h@acmecorp.com",      dept:"HR",         role:"Payroll Admin",             since:"2021-09-08", lastLogin:"2024-10-15", risk:"High",   status:"Pending"},
+  {id:13, name:"Mia Clark",        email:"mia.c@acmecorp.com",      dept:"Sales",      role:"Salesforce Standard User",  since:"2023-11-01", lastLogin:"2025-01-28", risk:"Low",    status:"Pending"},
+  {id:14, name:"Noah Lewis",       email:"noah.l@acmecorp.com",     dept:"Engineering",role:"GitHub Org Owner",          since:"2022-02-14", lastLogin:"2025-01-30", risk:"High",   status:"Pending"},
+  {id:15, name:"Olivia Hall",      email:"olivia.h@acmecorp.com",   dept:"Legal",      role:"NDA Repository Read",       since:"2024-06-01", lastLogin:"2025-01-20", risk:"Low",    status:"Pending"},
+  {id:16, name:"Paul Allen",       email:"paul.a@acmecorp.com",     dept:"Finance",    role:"Treasury System Admin",     since:"2021-01-20", lastLogin:"2024-09-01", risk:"High",   status:"Pending"},
+  {id:17, name:"Quinn Young",      email:"quinn.y@acmecorp.com",    dept:"Marketing",  role:"Email Campaign Admin",      since:"2023-07-15", lastLogin:"2025-01-22", risk:"Medium", status:"Pending"},
+  {id:18, name:"Rachel Turner",    email:"rachel.t@acmecorp.com",   dept:"IT",         role:"SIEM Read Access",          since:"2024-02-10", lastLogin:"2025-01-31", risk:"Low",    status:"Pending"},
+  {id:19, name:"Sam Moore",        email:"sam.m@acmecorp.com",      dept:"Engineering",role:"K8s Cluster Admin",         since:"2022-12-01", lastLogin:"2025-01-29", risk:"High",   status:"Pending"},
+  {id:20, name:"Tina Scott",       email:"tina.s@acmecorp.com",     dept:"HR",         role:"Employee Records Read",     since:"2023-04-25", lastLogin:"2025-01-18", risk:"Medium", status:"Pending"},
+  {id:21, name:"Umar Patel",       email:"umar.p@acmecorp.com",     dept:"Finance",    role:"Budget Reporting Read",     since:"2024-08-01", lastLogin:"2025-01-27", risk:"Low",    status:"Pending"},
+  {id:22, name:"Vera Evans",       email:"vera.e@acmecorp.com",     dept:"Sales",      role:"Deal Desk Manager",         since:"2022-06-10", lastLogin:"2024-12-30", risk:"Medium", status:"Pending"},
+  {id:23, name:"Will Robinson",    email:"will.r@acmecorp.com",     dept:"IT",         role:"Endpoint Admin",            since:"2021-03-05", lastLogin:"2025-01-31", risk:"Medium", status:"Pending"},
+  {id:24, name:"Xena Collins",     email:"xena.c@acmecorp.com",     dept:"Legal",      role:"eDiscovery Admin",          since:"2023-09-18", lastLogin:"2025-01-05", risk:"High",   status:"Pending"},
+  {id:25, name:"Yusuf Adams",      email:"yusuf.a@acmecorp.com",    dept:"Engineering",role:"CI/CD Pipeline Admin",      since:"2022-08-22", lastLogin:"2025-01-30", risk:"High",   status:"Pending"},
+  {id:26, name:"Zoe Baker",        email:"zoe.b@acmecorp.com",      dept:"Marketing",  role:"Social Media Manager",      since:"2024-04-12", lastLogin:"2025-01-24", risk:"Low",    status:"Pending"},
+  {id:27, name:"Aaron Murphy",     email:"aaron.m@acmecorp.com",    dept:"HR",         role:"Benefits Admin",            since:"2023-02-28", lastLogin:"2025-01-16", risk:"Medium", status:"Pending"},
+  {id:28, name:"Bella Cooper",     email:"bella.c@acmecorp.com",    dept:"Finance",    role:"Accounts Payable Writer",   since:"2022-10-05", lastLogin:"2025-01-23", risk:"Medium", status:"Pending"},
+  {id:29, name:"Chris Reed",       email:"chris.r@acmecorp.com",    dept:"IT",         role:"Network Admin",             since:"2020-11-12", lastLogin:"2025-01-31", risk:"High",   status:"Pending"},
+  {id:30, name:"Diana Foster",     email:"diana.f@acmecorp.com",    dept:"Sales",      role:"Reports Viewer",            since:"2024-09-01", lastLogin:"2025-01-28", risk:"Low",    status:"Pending"},
+  {id:31, name:"Ethan Rogers",     email:"ethan.r@acmecorp.com",    dept:"Engineering",role:"Jira Project Admin",        since:"2023-06-14", lastLogin:"2025-01-20", risk:"Low",    status:"Pending"},
+  {id:32, name:"Fiona Morgan",     email:"fiona.m@acmecorp.com",    dept:"Legal",      role:"Contract Signatory",        since:"2022-05-30", lastLogin:"2025-01-12", risk:"Medium", status:"Pending"},
+  {id:33, name:"George Bell",      email:"george.b@acmecorp.com",   dept:"Finance",    role:"CFO Dashboard Access",      since:"2020-08-01", lastLogin:"2024-07-15", risk:"High",   status:"Pending"},
+  {id:34, name:"Hannah Price",     email:"hannah.p@acmecorp.com",   dept:"HR",         role:"Recruitment Module Admin",  since:"2023-10-20", lastLogin:"2025-01-26", risk:"Low",    status:"Pending"},
+  {id:35, name:"Ian Powell",       email:"ian.p@acmecorp.com",      dept:"Marketing",  role:"CMS Admin",                 since:"2022-01-18", lastLogin:"2025-01-19", risk:"Medium", status:"Pending"},
+  {id:36, name:"Jade Long",        email:"jade.l@acmecorp.com",     dept:"IT",         role:"SOC Tier 1 Analyst",        since:"2024-07-01", lastLogin:"2025-01-31", risk:"Low",    status:"Pending"},
+  {id:37, name:"Kyle Patterson",   email:"kyle.p@acmecorp.com",     dept:"Engineering",role:"Cloud Cost Admin",          since:"2023-03-09", lastLogin:"2025-01-27", risk:"Medium", status:"Pending"},
+  {id:38, name:"Luna Ross",        email:"luna.r@acmecorp.com",     dept:"Sales",      role:"Territory Manager Access",  since:"2024-11-01", lastLogin:"2025-01-30", risk:"Low",    status:"Pending"},
+  {id:39, name:"Marcus Butler",    email:"marcus.b@acmecorp.com",   dept:"Finance",    role:"Payroll View",              since:"2023-12-15", lastLogin:"2025-01-21", risk:"Medium", status:"Pending"},
+  {id:40, name:"Nina Hughes",      email:"nina.h@acmecorp.com",     dept:"Legal",      role:"IP Registry Admin",         since:"2022-07-22", lastLogin:"2025-01-08", risk:"High",   status:"Pending"},
+  {id:41, name:"Oscar Simmons",    email:"oscar.s@acmecorp.com",    dept:"HR",         role:"Learning Mgmt Admin",       since:"2023-08-30", lastLogin:"2025-01-17", risk:"Low",    status:"Pending"},
+  {id:42, name:"Penny Fisher",     email:"penny.f@acmecorp.com",    dept:"Marketing",  role:"Paid Ads Manager",          since:"2024-02-20", lastLogin:"2025-01-29", risk:"Medium", status:"Pending"},
+  {id:43, name:"Quentin Stone",    email:"quentin.s@acmecorp.com",  dept:"IT",         role:"Identity Admin",            since:"2021-05-10", lastLogin:"2025-01-31", risk:"High",   status:"Pending"},
+  {id:44, name:"Rosa Webb",        email:"rosa.w@acmecorp.com",     dept:"Engineering",role:"Mobile Dev Provisioner",    since:"2023-01-28", lastLogin:"2025-01-25", risk:"Low",    status:"Pending"},
+  {id:45, name:"Steve Ford",       email:"steve.f@acmecorp.com",    dept:"Finance",    role:"Intercompany Reconciler",   since:"2022-11-14", lastLogin:"2024-08-20", risk:"High",   status:"Pending"},
+  {id:46, name:"Tara Ellis",       email:"tara.e@acmecorp.com",     dept:"Sales",      role:"Commissions Viewer",        since:"2024-06-15", lastLogin:"2025-01-28", risk:"Low",    status:"Pending"},
+  {id:47, name:"Uma Grant",        email:"uma.g@acmecorp.com",      dept:"HR",         role:"Org Chart Admin",           since:"2023-07-04", lastLogin:"2025-01-14", risk:"Low",    status:"Pending"},
+  {id:48, name:"Victor Shaw",      email:"victor.s@acmecorp.com",   dept:"Legal",      role:"Litigation Support Admin",  since:"2021-12-01", lastLogin:"2024-06-30", risk:"High",   status:"Pending"},
+];
+
+const COLORS = ['#4f8ef7','#a855f7','#22c55e','#f59e0b','#ef4444','#06b6d4','#f97316','#ec4899'];
+const avatarColors = {};
+function getAvatarColor(name) {
+  if (!avatarColors[name]) avatarColors[name] = COLORS[Object.keys(avatarColors).length % COLORS.length];
+  return avatarColors[name];
+}
+function initials(name) { return name.split(' ').map(n=>n[0]).join('').substring(0,2); }
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let data = USERS.map(u => ({...u}));
+let filtered = [...data];
+let page = 1;
+const PER_PAGE = 10;
+let auditLog = [];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function updateStats() {
+  const pending  = data.filter(u=>u.status==='Pending').length;
+  const approved = data.filter(u=>u.status==='Approved').length;
+  const revoked  = data.filter(u=>u.status==='Revoked').length;
+  const total    = data.length;
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-pending').textContent = pending;
+  document.getElementById('stat-approved').textContent = approved;
+  document.getElementById('stat-revoked').textContent = revoked;
+
+  document.getElementById('leg-pending').textContent = pending;
+  document.getElementById('leg-approved').textContent = approved;
+  document.getElementById('leg-revoked').textContent = revoked;
+
+  const done = approved + revoked;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('completion-pct').textContent = pct + '%';
+
+  const circ = 2 * Math.PI * 50; // 314.16
+
+  const pendingArc  = (pending  / total) * circ;
+  const approvedArc = (approved / total) * circ;
+  const revokedArc  = (revoked  / total) * circ;
+
+  const dp = document.getElementById('donut-pending');
+  const da = document.getElementById('donut-approved');
+  const dr = document.getElementById('donut-revoked');
+
+  dp.setAttribute('stroke-dasharray', `${pendingArc} ${circ - pendingArc}`);
+  dp.setAttribute('stroke-dashoffset', 0);
+
+  da.setAttribute('stroke-dasharray', `${approvedArc} ${circ - approvedArc}`);
+  da.setAttribute('stroke-dashoffset', -pendingArc);
+
+  dr.setAttribute('stroke-dasharray', `${revokedArc} ${circ - revokedArc}`);
+  dr.setAttribute('stroke-dashoffset', -(pendingArc + approvedArc));
+
+  updateDeptChart();
+}
+
+function updateDeptChart() {
+  const depts = {};
+  data.filter(u=>u.status==='Pending').forEach(u=>{ depts[u.dept] = (depts[u.dept]||0)+1; });
+  const sorted = Object.entries(depts).sort((a,b)=>b[1]-a[1]);
+  const max = sorted[0]?.[1] || 1;
+  const el = document.getElementById('dept-chart');
+  el.innerHTML = sorted.map(([dept, count], i)=>`
+    <div class="bar-row">
+      <span class="bar-label">${dept}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${(count/max)*100}%;background:${COLORS[i%COLORS.length]}"></div></div>
+      <span class="bar-count">${count}</span>
+    </div>`).join('');
+}
+
+function filterTable() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const status = document.getElementById('filter-status').value;
+  const risk   = document.getElementById('filter-risk').value;
+  const dept   = document.getElementById('filter-dept').value;
+
+  filtered = data.filter(u => {
+    const matchSearch = !search || u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search) || u.role.toLowerCase().includes(search) || u.dept.toLowerCase().includes(search);
+    const matchStatus = !status || u.status === status;
+    const matchRisk   = !risk   || u.risk === risk;
+    const matchDept   = !dept   || u.dept === dept;
+    return matchSearch && matchStatus && matchRisk && matchDept;
+  });
+
+  page = 1;
+  renderTable();
+}
+
+function renderTable() {
+  const start = (page-1)*PER_PAGE;
+  const pageData = filtered.slice(start, start+PER_PAGE);
+  const tbody = document.getElementById('table-body');
+
+  tbody.innerHTML = pageData.map(u=>`
+    <tr id="row-${u.id}" class="${u.status !== 'Pending' ? 'reviewed' : ''}">
+      <td>
+        <div class="user-cell">
+          <div class="avatar" style="background:${getAvatarColor(u.name)}">${initials(u.name)}</div>
+          <div class="user-cell-info">
+            <div class="name">${u.name}</div>
+            <div class="email">${u.email}</div>
+          </div>
+        </div>
+      </td>
+      <td>${u.dept}</td>
+      <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${u.role}">${u.role}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:0.72rem;color:var(--muted2)">${u.since}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:0.72rem;color:var(--muted2)">${u.lastLogin}</td>
+      <td><span class="risk-badge risk-${u.risk.toLowerCase()}">${u.risk}</span></td>
+      <td><span class="status-badge status-${u.status.toLowerCase()}">${u.status}</span></td>
+      <td>
+        <div class="action-btns">
+          ${u.status === 'Pending'
+            ? `<button class="action-btn action-approve" onclick="doAction(${u.id},'Approved')">✓ Approve</button>
+               <button class="action-btn action-revoke" onclick="doAction(${u.id},'Revoked')">✕ Revoke</button>`
+            : `<button class="action-btn action-done">${u.status === 'Approved' ? '✓ Done' : '✕ Revoked'}</button>
+               <button class="action-btn action-revoke" onclick="doUndo(${u.id})" style="font-size:0.56rem">Undo</button>`
+          }
+        </div>
+      </td>
+    </tr>`).join('');
+
+  document.getElementById('filter-count').textContent = `Showing ${filtered.length} of ${data.length} entries`;
+  renderPagination();
+}
+
+function renderPagination() {
+  const total = Math.ceil(filtered.length / PER_PAGE);
+  const start = (page-1)*PER_PAGE + 1;
+  const end = Math.min(page*PER_PAGE, filtered.length);
+  document.getElementById('page-info').textContent = `${start}–${end} of ${filtered.length}`;
+
+  const pb = document.getElementById('page-btns');
+  pb.innerHTML = '';
+  for (let i=1;i<=total;i++) {
+    const b = document.createElement('button');
+    b.className = 'page-btn' + (i===page?' active':'');
+    b.textContent = i;
+    b.onclick = ()=>{ page=i; renderTable(); };
+    pb.appendChild(b);
+  }
+}
+
+function doAction(id, action) {
+  const user = data.find(u=>u.id===id);
+  if (!user) return;
+  user.status = action;
+  const icon = action==='Approved' ? '✅' : '🚫';
+  const type = action==='Approved' ? 'success' : 'danger';
+  addAudit(icon, `<strong>${user.name}</strong>'s access to <strong>${user.role}</strong> was <strong>${action.toLowerCase()}</strong>.`);
+  showToast(`${user.name} — ${action}`, type);
+  updateStats();
+  renderTable();
+}
+
+function doUndo(id) {
+  const user = data.find(u=>u.id===id);
+  if (!user) return;
+  user.status = 'Pending';
+  addAudit('↩️', `Decision for <strong>${user.name}</strong> was undone. Status reset to <strong>Pending</strong>.`);
+  showToast(`${user.name} — Reset to Pending`, 'info');
+  updateStats();
+  renderTable();
+}
+
+function addAudit(icon, text) {
+  const now = new Date();
+  const time = now.toLocaleTimeString('en-CA', {hour:'2-digit',minute:'2-digit'});
+  auditLog.unshift({icon,text,time});
+  const el = document.getElementById('audit-log');
+  const item = document.createElement('div');
+  item.className = 'audit-item';
+  item.style.animation = 'slideIn 0.3s ease';
+  item.innerHTML = `<span class="audit-icon">${icon}</span><span class="audit-text">${text}</span><span class="audit-time">${time}</span>`;
+  el.insertBefore(item, el.firstChild);
+  if (el.children.length > 15) el.lastChild.remove();
+}
+
+function clearAudit() {
+  document.getElementById('audit-log').innerHTML = '<div class="audit-item"><span class="audit-icon">🗑️</span><span class="audit-text">Audit log cleared.</span><span class="audit-time">now</span></div>';
+}
+
+function showToast(msg, type='info') {
+  const tc = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icons = {success:'✅',danger:'🚫',info:'ℹ️'};
+  t.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  tc.appendChild(t);
+  setTimeout(()=>t.style.opacity='0', 2800);
+  setTimeout(()=>t.remove(), 3100);
+}
+
+function exportCSV() {
+  const rows = [['Name','Email','Department','Role','Since','Last Login','Risk','Status']];
+  data.forEach(u=>rows.push([u.name,u.email,u.dept,u.role,u.since,u.lastLogin,u.risk,u.status]));
+  const csv = rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'access-review-q1-2025.csv';
+  a.click();
+  showToast('CSV exported successfully', 'success');
+  addAudit('📥', `Access review report exported as <strong>access-review-q1-2025.csv</strong>`);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function init() {
+  // Populate dept filter
+  const depts = [...new Set(data.map(u=>u.dept))].sort();
+  const df = document.getElementById('filter-dept');
+  depts.forEach(d=>{ const o=document.createElement('option'); o.value=d; o.textContent=d; df.appendChild(o); });
+
+  updateStats();
+  filterTable();
+}
+
+init();
+</script>
+</body>
+</html>
